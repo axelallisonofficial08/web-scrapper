@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsPulse & FactVerify - Dashboard Scraping & Verifikasi Berita</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-sky-500 selection:text-white">
+
+    <!-- Top Navigation -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 via-indigo-500 to-emerald-400 p-0.5 shadow-lg shadow-sky-500/20">
+                    <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                        <i data-lucide="newspaper" class="w-5 h-5 text-sky-400"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="font-bold text-lg text-white tracking-tight">NewsPulse<span class="text-sky-400">.AI</span></h1>
+                        <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">Fact-Check Verifier</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Scraping Multi-Media (Google, Bing, X, Reddit) & Validasi Kebenaran Berita</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button id="btn-export-csv" class="hidden text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 hover:text-white transition flex items-center space-x-1.5">
+                    <i data-lucide="download" class="w-3.5 h-3.5 text-sky-400"></i>
+                    <span>Export CSV</span>
+                </button>
+                <button id="btn-export-json" class="hidden text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 hover:text-white transition flex items-center space-x-1.5">
+                    <i data-lucide="file-code" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    <span>Export JSON</span>
+                </button>
+                <div class="h-5 w-px bg-slate-800 hidden sm:block"></div>
+                <div class="flex items-center space-x-1 text-xs text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Live Scraper Ready</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <!-- Search & Control Panel -->
+        <section class="bg-gradient-to-b from-slate-900 to-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-16 -top-16 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="space-y-4">
+                <div class="flex flex-col md:flex-row gap-3 items-stretch">
+                    <!-- Search Input -->
+                    <div class="relative flex-1">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="search" class="w-5 h-5"></i>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="search-input" 
+                            placeholder="Ketik topik, nama tokoh, peristiwa, atau klaim yang ingin Anda cari & verifikasi..." 
+                            class="w-full pl-12 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 text-sm sm:text-base transition"
+                            autocomplete="off"
+                        >
+                    </div>
+
+                    <!-- Search Button -->
+                    <button 
+                        id="btn-search" 
+                        class="px-6 py-3.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-medium rounded-xl text-sm sm:text-base shadow-lg shadow-sky-500/25 flex items-center justify-center space-x-2 transition disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer"
+                    >
+                        <i data-lucide="sparkles" class="w-4 h-4 text-sky-200 group-hover:rotate-12 transition"></i>
+                        <span>Scrap & Verifikasi</span>
+                    </button>
+                </div>
+
+                <!-- Source Switches & Options -->
+                <div class="pt-2 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-300 border-t border-slate-800/80">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="text-slate-400 font-medium">Sumber Scraping:</span>
+                        
+                        <label class="flex items-center space-x-1.5 cursor-pointer bg-slate-950/60 px-2.5 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 transition">
+                            <input type="checkbox" id="src-google" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
+                            <span>Google News</span>
+                        </label>
+                        
+                        <label class="flex items-center space-x-1.5 cursor-pointer bg-slate-950/60 px-2.5 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 transition">
+                            <input type="checkbox" id="src-bing" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
+                            <span>Bing News</span>
+                        </label>
+
+                        <label class="flex items-center space-x-1.5 cursor-pointer bg-slate-950/60 px-2.5 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 transition">
+                            <input type="checkbox" id="src-reddit" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
+                            <span>Reddit</span>
+                        </label>
+
+                        <label class="flex items-center space-x-1.5 cursor-pointer bg-slate-950/60 px-2.5 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 transition">
+                            <input type="checkbox" id="src-twitter" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
+                            <span>X (Twitter) & Sosmed</span>
+                        </label>
+
+                        <label class="flex items-center space-x-1.5 cursor-pointer bg-slate-950/60 px-2.5 py-1.5 rounded-lg border border-emerald-500/30 text-emerald-300 hover:border-emerald-500/50 transition">
+                            <input type="checkbox" id="src-factcheck" checked class="rounded border-slate-700 text-emerald-500 focus:ring-0">
+                            <span>Cek Fakta (TurnBackHoax)</span>
+                        </label>
+
+                        <!-- Scraping Limit Selector -->
+                        <div class="flex items-center space-x-1.5 bg-slate-950/60 px-2.5 py-1 rounded-lg border border-slate-800">
+                            <span class="text-slate-400">Limit:</span>
+                            <select id="limit-per-source" class="bg-transparent text-sky-400 font-semibold focus:outline-none cursor-pointer">
+                                <option value="15" class="bg-slate-900 text-white">15 per Sumber (Standar)</option>
+                                <option value="30" selected class="bg-slate-900 text-white">30 per Sumber (Rekomendasi)</option>
+                                <option value="50" class="bg-slate-900 text-white">50 per Sumber (Banyak)</option>
+                                <option value="100" class="bg-slate-900 text-white">100 per Sumber (Maksimal)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Preset Suggestions -->
+                    <div class="flex items-center space-x-2">
+                        <span class="text-slate-500 hidden sm:inline">Contoh Coba:</span>
+                        <div class="flex items-center space-x-1.5 overflow-x-auto">
+                            <button class="preset-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">Pilpres</button>
+                            <button class="preset-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">Bansos Kemensos</button>
+                            <button class="preset-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">Artificial Intelligence</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <section id="loading-state" class="hidden text-center py-16 space-y-4">
+            <div class="inline-flex p-4 rounded-full bg-sky-500/10 border border-sky-500/20 animate-spin text-sky-400">
+                <i data-lucide="loader-2" class="w-8 h-8"></i>
+            </div>
+            <div>
+                <h3 class="text-base font-semibold text-white">Sedang Menjalankan Multi-Platform Scraper...</h3>
+                <p class="text-sm text-slate-400 max-w-md mx-auto mt-1">Mengambil data secara asinkron dari Google News, Bing, Reddit, X (Twitter), dan basis data Cek Fakta TurnBackHoax.</p>
+            </div>
+        </section>
+
+        <!-- Verification Intelligence Header (Shows when results arrive) -->
+        <section id="verification-banner" class="hidden space-y-4">
+            <div id="verdict-card" class="rounded-2xl border p-6 transition-all duration-300 relative overflow-hidden">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div class="space-y-2 flex-1">
+                        <div class="flex items-center space-x-2">
+                            <span id="verdict-icon-container" class="p-2 rounded-lg"></span>
+                            <span id="verdict-badge" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider"></span>
+                            <span id="stat-elapsed" class="text-xs text-slate-400"></span>
+                        </div>
+                        <h2 id="verdict-title" class="text-xl sm:text-2xl font-bold text-white tracking-tight"></h2>
+                        <p id="verdict-summary" class="text-sm text-slate-300 leading-relaxed"></p>
+                        <div id="verdict-recommendation" class="text-xs font-medium px-3.5 py-2.5 rounded-xl border flex items-start space-x-2">
+                            <i data-lucide="shield-check" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                            <span id="verdict-recommendation-text"></span>
+                        </div>
+                    </div>
+
+                    <!-- Metric Stats Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:w-96 shrink-0">
+                        <div class="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl text-center">
+                            <p class="text-[11px] text-slate-400 uppercase font-medium">Total Ditemukan</p>
+                            <p id="stat-total" class="text-2xl font-bold text-white mt-0.5">0</p>
+                        </div>
+                        <div class="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl text-center">
+                            <p class="text-[11px] text-slate-400 uppercase font-medium">Media Resmi</p>
+                            <p id="stat-reputable" class="text-2xl font-bold text-sky-400 mt-0.5">0</p>
+                        </div>
+                        <div class="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl text-center">
+                            <p class="text-[11px] text-slate-400 uppercase font-medium">Cek Fakta</p>
+                            <p id="stat-fact" class="text-2xl font-bold text-emerald-400 mt-0.5">0</p>
+                        </div>
+                        <div class="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl text-center">
+                            <p class="text-[11px] text-slate-400 uppercase font-medium">Medsos / Opini</p>
+                            <p id="stat-social" class="text-2xl font-bold text-amber-400 mt-0.5">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section id="results-container" class="hidden space-y-6">
+            
+            <!-- Filter & Sort Control Panel -->
+            <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl space-y-3.5 shadow-md">
+                
+                <!-- Row 1: Filter Didapat Dari Mana (Platform Origin Filter) -->
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+                    <div class="flex items-center space-x-2 shrink-0">
+                        <i data-lucide="layers" class="w-4 h-4 text-sky-400"></i>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Didapat Dari Platform:</span>
+                    </div>
+
+                    <!-- Dynamic Platform Pills -->
+                    <div class="flex items-center flex-wrap gap-2" id="platform-filter-container">
+                        <!-- Populated dynamically with live counts -->
+                    </div>
+                </div>
+
+                <!-- Row 2: Secondary Filters & Search -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Specific Publisher / Media Outlet Filter -->
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-slate-400 font-medium">Redaksi / Sumber:</span>
+                            <select id="publisher-select" class="bg-slate-950 border border-slate-700 text-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-sky-500 text-xs max-w-[200px]">
+                                <option value="all">Semua Media & Akun</option>
+                            </select>
+                        </div>
+
+                        <!-- Active filter indicator & Reset -->
+                        <div id="active-filter-banner" class="hidden items-center space-x-2 bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-lg text-sky-300">
+                            <span id="active-filter-text">Filter aktif</span>
+                            <button id="btn-reset-filters" class="hover:text-white font-bold ml-1 text-slate-400 hover:text-white" title="Reset filter">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- Instant Filter Keyword & Sort -->
+                    <div class="flex items-center space-x-2">
+                        <div class="relative flex-1 sm:w-48">
+                            <input 
+                                type="text" 
+                                id="filter-keyword" 
+                                placeholder="Filter kata kunci..." 
+                                class="w-full pl-7 pr-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 text-xs"
+                            >
+                            <i data-lucide="filter" class="w-3.5 h-3.5 absolute left-2 top-2 text-slate-500"></i>
+                        </div>
+
+                        <select id="sort-select" class="bg-slate-950 border border-slate-700 text-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-sky-500 text-xs">
+                            <option value="credibility">Kredibilitas Tertinggi</option>
+                            <option value="latest">Urutan Terkini</option>
+                            <option value="platform">Grup Platform</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- News & Mention Cards Grid -->
+            <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamically populated -->
+            </div>
+
+            <!-- Empty Filter Message -->
+            <div id="empty-filter-state" class="hidden text-center py-12 bg-slate-900/40 border border-slate-800 rounded-2xl">
+                <i data-lucide="file-question" class="w-10 h-10 text-slate-500 mx-auto mb-2"></i>
+                <p class="text-sm text-slate-400">Tidak ada artikel atau postingan yang cocok dengan kriteria filter saat ini.</p>
+                <button onclick="resetAllFilters()" class="mt-3 text-xs text-sky-400 hover:underline">Reset Semua Filter</button>
+            </div>
+        </section>
+
+        <!-- Initial Placeholder State -->
+        <section id="initial-state" class="text-center py-20 border border-dashed border-slate-800 rounded-2xl bg-slate-900/20">
+            <div class="max-w-md mx-auto space-y-4">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+                    <i data-lucide="radio" class="w-7 h-7"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">Mulai Monitoring & Verifikasi Berita</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Masukkan topik, nama instansi, atau klaim viral di kotak pencarian di atas. Dashboard akan mengumpulkan pemberitaan dari Google News, Bing, Reddit, X (Twitter), dan basis data Cek Fakta untuk membuktikan apakah isu tersebut benar atau hoaks.
+                </p>
+                <div class="pt-2 flex items-center justify-center gap-4 text-xs text-slate-500">
+                    <span class="flex items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400 mr-1"></i> Multi-Source Scraping</span>
+                    <span class="flex items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400 mr-1"></i> Direct Redirect Link</span>
+                    <span class="flex items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400 mr-1"></i> Deteksi Hoaks</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-slate-900 border border-slate-700 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2">
+        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+        <span id="toast-text">Tautan berhasil disalin!</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
